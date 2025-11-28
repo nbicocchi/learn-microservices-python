@@ -3,7 +3,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from schemas.product import ProductCreate, ProductRead, ProductUpdate
 from repository.product_repository import ProductRepository
 from service.product_service import ProductService
-from core.database import get_session
+from core import get_session
 
 router = APIRouter(prefix="/products", tags=["Products"])
 

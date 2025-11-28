@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from core.database import get_session
+from core import get_session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 

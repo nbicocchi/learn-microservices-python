@@ -1,11 +1,10 @@
 from sqlmodel import SQLModel, create_engine, Session
-from core.config import settings
+from core import settings
 
 # Use DATABASE_URL from settings
 engine = create_engine(settings.database_url, echo=True)
 
 def init_db():
-    from models.product import Product  # import all models
     SQLModel.metadata.create_all(engine)
 
 def get_session():
