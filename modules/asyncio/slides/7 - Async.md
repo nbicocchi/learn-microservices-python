@@ -1,26 +1,22 @@
 # Asynchronous programming
 
-## Concurrency vs Parallelism
+In computer science, we often need to manage multiple tasks to improve efficiency. This is where the concepts of concurrency and parallelism come into play. While often used interchangeably, they are fundamentally different.
 
-* **Concurrency**: Structuring a program to handle multiple tasks that **make progress simultaneously**.
+## Concurrency
 
-  * Tasks may **not actually run at the same instant**.
-  * Can be implemented with **cooperative or preemptive scheduling**.
-  * Best for: I/O-bound applications where tasks spend a lot of time waiting, e.g., web servers, network services, GUI applications.
-  * Example: Python `asyncio` handles hundreds of network requests concurrently on a single CPU core using cooperative context switching.
+**Concurrency** is about dealing with many things at once. It's a way of structuring a program so that it can handle multiple tasks seemingly at the same time, even if the computer's processor can only execute one instruction at a time.
 
-* **Parallelism**: Tasks literally **run at the same time** on multiple processors or cores.
+A good analogy is a single *juggler*. The juggler is only catching and throwing one ball at a time, but by quickly switching between them, they keep all the balls in the air. This is a context-switching process. In a single-core CPU, concurrent tasks take turns using the processor.
 
-  * Requires multiple cores or processors.
-  * Often uses threads or processes that execute in true parallel.
-  * Best for: CPU-bound applications that require heavy computation.
-  * Example: A machine learning program performing matrix multiplication on multiple CPU cores at once.
+## Parallelism
 
+**Parallelism** is about doing *many things at the same time*. This requires multiple processors or processor cores.
 
-**Is concurrency better than parallelism?**
+Think of a team of chefs in a kitchen. Each chef is working on a different dish simultaneously. This is true simultaneous execution. Parallelism is essential for CPU-bound tasks, which are operations that are limited by the speed of the CPU, such as heavy computations or complex calculations.
+
+## Is concurrency better than parallelism?
 
 Concurrency is different than parallelism. And it is better on specific scenarios that involve a lot of waiting. Because of that, it generally is a lot better than parallelism for web application development. But not for everything.
-
 
 ## Synchronous vs Asynchronous
 
@@ -302,9 +298,9 @@ asyncio.run(main())
 * Total runtime ≈ 3 seconds, not 5, because `await` allows overlapping execution.
 
 
-## Microservices frameworks
+## HTTP Messages handling approaches
 
-### Synchronous Approach
+### Synchronous Handler with Threads
 **Definition:** Each request is handled in a **dedicated thread** and blocks until the operation completes.  
 
 **Technical Details / Limitations:**
@@ -373,7 +369,7 @@ def items_view(request):
 
 ---
 
-### Asynchronous Approach
+### Asynchronous Handler
 **Definition:** Tasks **yield control while awaiting I/O**; the **event loop** schedules pending operations.  
 
 **Benefits:**
@@ -414,7 +410,115 @@ async def get_items_async():
     return ["Item1","Item2","Item3"]
 ```
 
+## Asynchronous Message Handling Models
+
+### Synchronous, Single-Threaded Handler
+
+**Characteristics**
+
+* Fully sequential
+* Processes *one message at a time*
+* Simplest possible model
+* Low throughput, no concurrency
+* No threads, no async, no parallelism
+
+```python
+import pika
+import time
+
+def process_message(body):
+    print(f"[SYNC] Processing: {body.decode()}")
+    time.sleep(2)  # Blocking work
+    print(f"[SYNC] Done: {body.decode()}")
+
+def on_message(channel, method_frame, header_frame, body):
+    process_message(body)  # Sequential processing
+    channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host='localhost')
+)
+channel = connection.channel()
+
+channel.queue_declare(queue='tasks')
+channel.basic_consume(queue='tasks', on_message_callback=on_message)
+
+print(" [*] Waiting for messages (sync, single-thread)...")
+channel.start_consuming()
+```
+
 ---
+
+### Synchronous Handler with Threads
+
+**Characteristics**
+
+* Still blocking code, but each message handled in a separate thread
+* Scheduling is **preemptive** (OS manages threads)
+* Concurrency works well for I/O-bound tasks
+* Limited by GIL for CPU-bound tasks
+
+```python
+import pika
+import time
+import threading
+
+def process_message(body):
+    print(f"[SYNC] Processing: {body.decode()}")
+    time.sleep(2)  # Simulated I/O-bound work
+    print(f"[SYNC] Done: {body.decode()}")
+
+def on_message(channel, method_frame, header_frame, body):
+    threading.Thread(target=process_message, args=(body,)).start()
+    channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host='localhost')
+)
+channel = connection.channel()
+
+channel.queue_declare(queue='tasks')
+channel.basic_consume(queue='tasks', on_message_callback=on_message)
+
+print(" [*] Waiting for messages (sync + threads)...")
+channel.start_consuming()
+```
+
+### Asynchronous Handler
+
+**Characteristics**
+
+* Uses **cooperative concurrency**
+* Each message is scheduled as an `async` task
+* Excellent for I/O-bound workloads
+* Very high throughput with minimal overhead
+* No thread creation, no context-switching cost
+
+```python
+import asyncio
+import aio_pika
+
+async def process_message(body):
+    print(f"[ASYNC] Processing: {body.decode()}")
+    await asyncio.sleep(2)  # Non-blocking I/O
+    print(f"[ASYNC] Done: {body.decode()}")
+
+async def main():
+    connection = await aio_pika.connect_robust("amqp://guest:guest@localhost/")
+    
+    async with connection:
+        channel = await connection.channel()
+        queue = await channel.declare_queue("tasks")
+
+        async with queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                async with message.process():
+                    asyncio.create_task(process_message(message.body))
+                    # Task scheduled, not blocking the consumer loop
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
 
 ## Backpressure
 
