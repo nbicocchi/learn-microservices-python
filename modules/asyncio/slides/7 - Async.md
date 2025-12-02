@@ -414,8 +414,6 @@ async def get_items_async():
 
 ### Synchronous, Single-Threaded Handler
 
-**Characteristics**
-
 * Fully sequential
 * Processes *one message at a time*
 * Simplest possible model
@@ -451,8 +449,6 @@ channel.start_consuming()
 
 ### Synchronous Handler with Threads
 
-**Characteristics**
-
 * Still blocking code, but each message handled in a separate thread
 * Scheduling is **preemptive** (OS manages threads)
 * Concurrency works well for I/O-bound tasks
@@ -485,8 +481,6 @@ channel.start_consuming()
 ```
 
 ### Asynchronous Handler
-
-**Characteristics**
 
 * Uses **cooperative concurrency**
 * Each message is scheduled as an `async` task
@@ -557,18 +551,8 @@ Whenever a producer is able to generate data faster than the consumer can proces
 
 Without this regulation, systems become unstable.
 
-```text
-Flux.fromIterable(items)
-    .flatMap(item -> webClient.post()
-                              .uri("http://consumer-service/items")
-                              .bodyValue(item)
-                              .retrieve()
-                              .bodyToMono(Void.class
-
-```
-
 ```python
-queue = asyncio.Queue(maxsize=10)  # max pending requests
+queue = asyncio.Queue(maxsize=10)  # max pending requests implies backpressure
 
 async def producer(items):
     for item in items:

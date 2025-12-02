@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, create_engine, Session
-from core import settings
+from core.config import settings
 
 # Use DATABASE_URL from settings
 engine = create_engine(settings.database_url, echo=True)
