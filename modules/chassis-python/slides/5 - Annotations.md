@@ -63,20 +63,7 @@ def read_items(commons: Annotated[dict, Depends(common_parameters)]):
 
 The endpoint `read_items` receives `commons` as the dictionary returned by `common_parameters` function.
 
-A common use case for `Depends` is **Authentication&Authorization** and **Database Session Management**
-
-```py
-# Authentication&Authorization
-
-def get_current_user(token: str):
-    if token != "secret":
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    return {"username": "admin"}
-
-@app.get("/profile/")
-def read_profile(user: Annotated[dict, Depends(get_current_user)]):
-    return user
-```
+A common use case for `Depends` is **Database Session Management**
 
 ```py
 # Database Session Management

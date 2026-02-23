@@ -9,7 +9,6 @@ from schemas.product import ProductCreate
 from core.config import settings
 from api.health_controller import health_router
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: initialize DB

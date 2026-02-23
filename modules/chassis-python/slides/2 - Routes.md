@@ -37,11 +37,7 @@ FastAPI supports all the most common HTTP methods. You can declare them using de
 
 ## Request/Response
 
-A **response** body is the data your API sends to the client.
-
-You can declare the **type** used for the response by annotating the path operation function **return type**.
-
-You can use *type annotations* the same way you would for input data in function parameters, you can use Pydantic models, lists, dictionaries, scalar values like integers, booleans, etc.
+A **response** body is the data your API sends to the client. You can declare the **type** used for the response by annotating the path operation function **return type**.
 
 FastAPI will use this return type to **validate the returned data**. If the data is invalid (e.g. you are missing a field), it means that your app code is *broken*, not returning what it should, and it will return a **server error** instead of returning incorrect data. This way you and your clients can be certain that they will receive the data and the data shape expected.
 
