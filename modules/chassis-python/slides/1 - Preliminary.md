@@ -67,6 +67,7 @@ class User(BaseModel):
 
 User("mail@mail.com", "secret") # OK
 User(42, 3.14)  # raise ValidationError
+```
 
 # Python async/await
 

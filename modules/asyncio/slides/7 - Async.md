@@ -1,166 +1,149 @@
 # Asynchronous programming
 
-In computer science, we often need to manage multiple tasks to improve efficiency. This is where the concepts of concurrency and parallelism come into play. While often used interchangeably, they are fundamentally different.
 
 ## Concurrency
 
-**Concurrency** is about dealing with many things at once. It's a way of structuring a program so that it can handle multiple tasks seemingly at the same time, even if the computer's processor can only execute one instruction at a time.
+* **Definition:** Managing **multiple tasks at once**, but not necessarily executing them simultaneously.
+* **Key idea:** Structuring a program so tasks can **progress independently**.
+* **Analogy:** A **single juggler** tossing several balls—one at a time, but all kept in the air.
+* **CPU:** Works on one task at a time; tasks **switch context** quickly.
+* **Use case:** I/O-bound workloads, web servers, high-latency operations.
 
-A good analogy is a single *juggler*. The juggler is only catching and throwing one ball at a time, but by quickly switching between them, they keep all the balls in the air. This is a context-switching process. In a single-core CPU, concurrent tasks take turns using the processor.
+---
 
 ## Parallelism
 
-**Parallelism** is about doing *many things at the same time*. This requires multiple processors or processor cores.
+* **Definition:** Doing **multiple things simultaneously**.
+* **Key idea:** Tasks **actually run at the same time** on multiple processors or cores.
+* **Analogy:** **Team of chefs** preparing different dishes simultaneously.
+* **CPU:** Multiple cores execute tasks concurrently.
+* **Use case:** CPU-bound tasks, heavy computation, simulations, scientific calculations.
 
-Think of a team of chefs in a kitchen. Each chef is working on a different dish simultaneously. This is true simultaneous execution. Parallelism is essential for CPU-bound tasks, which are operations that are limited by the speed of the CPU, such as heavy computations or complex calculations.
+---
 
-## Is concurrency better than parallelism?
+## Quick Comparison
 
-Concurrency is different than parallelism. And it is better on specific scenarios that involve a lot of waiting. Because of that, it generally is a lot better than parallelism for web application development. But not for everything.
+| Feature         | Concurrency      | Parallelism           |
+| --------------- | ---------------- | --------------------- |
+| Execution       | Interleaved      | Simultaneous          |
+| Number of cores | 1+               | Multiple required     |
+| Best for        | I/O-bound tasks  | CPU-bound tasks       |
+| Example         | Async web server | Matrix multiplication |
 
-## Synchronous vs Asynchronous
+---
 
-* **Synchronous:**
+## Early Software: Manual Concurrency
 
-  * A task **waits for an operation to complete** before moving on.
-  * Example: Reading a file synchronously — the program blocks until the file is fully read.
-  * Works naturally with **blocking code** and **preemptive concurrency** if multiple threads are used.
-  * Can be inefficient for I/O-bound tasks because the CPU sits idle while waiting.
+* In early systems, **the programmer managed everything**:
 
-* **Asynchronous:**
+  * Scheduling
+  * Coordination of tasks
+* **All decisions were manual** → complex and error-prone code
+* Example: Batch systems and early operating systems
 
-  * A task **does not block while waiting**; it can yield control so other tasks can run.
-  * Example: Using `async/await` in Python to read multiple files concurrently.
-  * Works well with **cooperative concurrency**, where tasks voluntarily yield while waiting.
-  * Ideal for **I/O-bound workloads** or high-latency operations (network, disk, database).
+> The concept of “automatic concurrency” did not exist yet.
 
-### Synchronous I/O
+---
 
-In this version, each `accept()` call is **blocking**.
-The server waits indefinitely for a connection on **sock1**, and only after completing that interaction does it move to **sock2**.
-This means the server can only handle one port at a time and becomes unresponsive on the other port until the current accept completes.
+## The Emergence of the **Scheduler**
 
-```python
-...
+* Introduction of **OS schedulers**:
 
-print("Server listening on ports 9001 and 9002...")
+  * Automatically **switch between processes**
+  * **CPU time-sharing**: one process uses CPU, then another
+* Benefits:
 
-while True:
-    # This call BLOCKS: execution stops here until someone connects to port 9001
-    print("Waiting for client on port 9001...")
-    client1, addr1 = sock1.accept()
-    print(f"Connection from {addr1} on port 9001")
-    client1.send(b"Hello from server port 9001!\n")
-    client1.close()
+  * Simplifies code
+  * Enables multitasking without manual management
 
-    # Only after finishing with port 9001 does the server handle port 9002
-    print("Waiting for client on port 9002...")
-    client2, addr2 = sock2.accept()
-    print(f"Connection from {addr2} on port 9002")
-    client2.send(b"Hello from server port 9002!\n")
-    client2.close()
-```
+---
+
+## Concurrency with Threads & High Throughput
+
+* In **I/O-bound, high-throughput systems**:
+
+  * Each request → **dedicated thread**
+  * Scheduler switches between all threads
+* Problems:
+
+  * **Thousands of waiting threads** saturate memory and CPU
+  * Increased latency → degraded performance
+
+---
+
+## Return to Cooperative Concurrency
+
+* Modern solution: **cooperative concurrency / async**
+
+  * Tasks or coroutines **voluntarily yield CPU** during I/O
+  * No dedicated thread per request
+* Benefits:
+
+  * Handles **thousands of tasks** on few threads
+  * **Reduces memory and context-switch overhead**
+  * Perfect for **web servers and I/O-bound services**
+
+---
+
+## Synchronous Model (Blocking)
+
+* **Model:** **Inherently parallel**
+
+  * Each request spawns a **dedicated thread**.
+  * The thread **blocks** until the operation completes (e.g., file read, DB query).
+* **Implications:**
+
+  * Multiple threads can run in parallel on multiple cores.
+  * High memory and CPU overhead if there are many concurrent requests.
+  * Thread-per-request model can **saturate resources** in I/O-bound systems.
+* **Example:** Reading a file synchronously — the program **waits** until the read finishes.
 
 ```mermaid
-sequenceDiagram
-    participant Server
-    participant Port9001
-    participant Port9002
+%% Synchronous vs Asynchronous I/O
 
-    Server->>Port9001: accept() (blocks)
-    Note right of Server: Server is stuck here<br>until a client connects
-    Port9001-->>Server: Client connects
-    Server->>Port9001: Handle request
-
-    Server->>Port9002: accept() (blocks)
-    Note right of Server: Now stuck waiting<br>for client on port 9002
-    Port9002-->>Server: Client connects
-    Server->>Port9002: Handle request
-
-    Server->>Server: Loop repeats
-
+flowchart LR
+    subgraph Sync["Synchronous / Thread-per-request (Parallel)"]
+        direction TB
+        Req1["Request 1"] --> T1["Thread 1 (blocked)"]
+        Req2["Request 2"] --> T2["Thread 2 (blocked)"]
+        Req3["Request 3"] --> T3["Thread 3 (blocked)"]
+        T1 -->|Finished| Resp1["Response 1"]
+        T2 -->|Finished| Resp2["Response 2"]
+        T3 -->|Finished| Resp3["Response 3"]
+    end
 ```
 
 ---
 
-### Asynchronous I/O
+## Asynchronous Model (Non-blocking)
 
-Instead of blocking on a single `accept()`, it uses `select()` to wait for **any** socket to become readable.
-This allows the server to react to whichever port receives a connection first, making it responsive on both ports concurrently.
+* **Model:** **Inherently concurrent**
 
-```python
-...
+  * A task **does not block**; it **yields control** while waiting for I/O.
+  * Other tasks can **progress on the same thread**.
+* **Implications:**
 
-print("Server listening on ports 9001 and 9002...")
-
-while True:
-    # select() waits until *any* socket is ready.
-    # It does NOT block on a specific socket.
-    ready_to_read, _, _ = select.select(sockets, [], [], 1)
-
-    # Handle all sockets that have incoming connections
-    for s in ready_to_read:
-        client, addr = s.accept()
-        print(f"Connection from {addr} on port {s.getsockname()[1]}")
-        client.send(b"Hello from server!\n")
-        client.close()
-```
+  * Efficient handling of **thousands of simultaneous tasks** with minimal threads.
+  * Reduces memory and context-switch overhead.
+  * Ideal for **I/O-bound workloads** or high-latency operations (network, disk, DB).
+* **Example:** Using `async/await` in Python — multiple file reads **overlap**, no threads are blocked.
 
 ```mermaid
-sequenceDiagram
-    participant Server
-    participant Port9001
-    participant Port9002
+%% Synchronous vs Asynchronous I/O
 
-    Server->>Server: select(sock1, sock2)
-    Note right of Server: Server waits for<br>any socket to be ready
-
-    alt Port9001 ready first
-        Port9001-->>Server: fd becomes readable
-        Server->>Port9001: accept() + handle client
+flowchart LR
+    subgraph Async["Asynchronous / Event-loop (Concurrent)"]
+        direction TB
+        EL["Event Loop"] --> Task1["Task 1 (awaiting I/O)"]
+        EL --> Task2["Task 2 (awaiting I/O)"]
+        EL --> Task3["Task 3 (awaiting I/O)"]
+        Task1 -->|I/O ready| Resp1a["Response 1"]
+        Task2 -->|I/O ready| Resp2a["Response 2"]
+        Task3 -->|I/O ready| Resp3a["Response 3"]
     end
-
-    Server->>Server: select(sock1, sock2)
-
-    alt Port9002 ready first
-        Port9002-->>Server: fd becomes readable
-        Server->>Port9002: accept() + handle client
-    end
-
-    Server->>Server: Loop repeats
 ```
 
-## Limits of parallel blocking I/O (One thread per request)
-
-```python
-import time
-
-def db_query(name, duration):
-    print(f"Query {name} started")
-    time.sleep(duration)  # Simulate blocking DB call
-    print(f"Query {name} finished")
-
-# Two database queries executed sequentially
-db_query("A", 2)
-db_query("B", 3)
-print("All queries done")
-```
-
-* In traditional blocking code, each incoming request is handled by a dedicated thread.
-* While the thread waits (e.g., for a database query, HTTP call, or file I/O), it **cannot do anything else**.
-* Microservices often handle **thousands of concurrent requests**, so:
-
-    * Blocking threads consume memory and CPU.
-    * Thread pools can become exhausted, leading to request rejection or increased latency.
-
-**Example:**
-
-```text
-Thread pool: 200 threads
-Requests per second: 500
-If each request blocks 2 seconds → threads saturate → new requests must wait → slow response
-```
-
+---
 
 ## Asyncio library
 

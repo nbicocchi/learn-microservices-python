@@ -34,7 +34,7 @@ services:
       start_period: 5s
 
   postgres:
-    image: postgres:17
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
