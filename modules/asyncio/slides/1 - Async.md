@@ -1,16 +1,6 @@
 # Asynchronous programming
 
-## History
-
-### Concurrency
-
-* **Definition:** Managing **multiple tasks at once**, but not necessarily executing them simultaneously.
-* **Key idea:** Structuring a program so tasks can **progress independently**.
-* **Analogy:** A **single juggler** tossing several balls—one at a time, but all kept in the air.
-* **CPU:** Works on one task at a time; tasks **switch context** quickly.
-* **Use case:** I/O-bound workloads, web servers, high-latency operations.
-
----
+## Key Ideas
 
 ### Parallelism
 
@@ -19,6 +9,16 @@
 * **Analogy:** **Team of chefs** preparing different dishes simultaneously.
 * **CPU:** Multiple cores execute tasks concurrently.
 * **Use case:** CPU-bound tasks, heavy computation, simulations, scientific calculations.
+
+---
+
+### Concurrency
+
+* **Definition:** Managing **multiple tasks at once**, but not necessarily executing them simultaneously.
+* **Key idea:** Structuring a program so tasks can **progress independently**.
+* **Analogy:** A **single juggler** tossing several balls—one at a time, but all kept in the air.
+* **CPU:** Works on one task at a time; tasks **switch context** quickly.
+* **Use case:** I/O-bound workloads, web servers, high-latency operations.
 
 ---
 
@@ -46,7 +46,7 @@
 
 ---
 
-### The Emergence of the **Scheduler**
+### The Emergence of the **Scheduler** (Automatic Parallelism)
 
 * Introduction of **OS schedulers**:
 
@@ -59,7 +59,7 @@
 
 ---
 
-### Concurrency with Threads & High Throughput
+### Parallelism with Threads & High Throughput
 
 * In **I/O-bound, high-throughput systems**:
 
@@ -92,12 +92,9 @@
 
   * Each request spawns a **dedicated thread**.
   * The thread **blocks** until the operation completes (e.g., file read, DB query).
-* **Implications:**
-
-  * Multiple threads can run in parallel on multiple cores.
-  * High memory and CPU overhead if there are many concurrent requests.
+* **Implications:**.
   * Thread-per-request model can **saturate resources** in I/O-bound systems.
-* **Example:** Reading a file synchronously — the program **waits** until the read finishes.
+  * High memory and CPU overhead if there are many concurrent requests
 
 ```mermaid
 %% Synchronous vs Asynchronous I/O
@@ -123,11 +120,9 @@ flowchart LR
   * A task **does not block**; it **yields control** while waiting for I/O.
   * Other tasks can **progress on the same thread**.
 * **Implications:**
-
   * Efficient handling of **thousands of simultaneous tasks** with minimal threads.
-  * Reduces memory and context-switch overhead.
   * Ideal for **I/O-bound workloads** or high-latency operations (network, disk, DB).
-* **Example:** Using `async/await` in Python — multiple file reads **overlap**, no threads are blocked.
+  * Reduces memory and context-switch overhead.
 
 ```mermaid
 %% Synchronous vs Asynchronous I/O
@@ -148,9 +143,7 @@ flowchart LR
 
 ## Asyncio library
 
-Python's asyncio library provides a framework for writing concurrent code using the asynchronous paradigm. The `async` and `await` keywords are the core components of this framework.
-
-Together, `async` and `await` enable a style of programming called **cooperative multitasking**. The coroutines voluntarily yield control to each other, allowing the program to perform multiple operations concurrently on a single thread without blocking. 
+Python's asyncio library provides a framework for writing concurrent code (**cooperative multitasking**) using the asynchronous paradigm. The `async` and `await` keywords are the core components of this framework.
 
 ### `async`
 

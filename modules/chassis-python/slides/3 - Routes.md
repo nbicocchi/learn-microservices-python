@@ -1,50 +1,5 @@
 # Routes
 
-## Annotations
-In Python, **`Annotated`** is a special type hint from the `typing` module (or `typing_extensions` in older versions) that lets you **attach metadata to a type**. This metadata can be used by tools, frameworks, or libraries, without affecting the runtime type itself. Essentially, it’s a way to **add extra information to a type hint**.
-
-### Basic Syntax
-
-```python
-from typing import Annotated
-
-# Annotated[type, metadata1, metadata2, ...]
-x: Annotated[int, "This is a positive integer"] = 42
-```
-
-* `int` → the actual type of `x`.
-* `"This is a positive integer"` → metadata (a description, constraint, or anything a tool might use).
-
----
-
-### With Multiple Metadata
-
-```python
-from typing import Annotated
-
-x: Annotated[int, "positive", "less than 100"] = 10
-```
-
-* Here, both `"positive"` and `"less than 100"` are attached as metadata.
-* Python itself **ignores these at runtime**, but tools can use them.
-
----
-
-### Practical Example with `pydantic` or `FastAPI`
-
-`Annotated` is especially useful in frameworks that perform **runtime validation**:
-
-```python
-from typing import Annotated
-from pydantic import BaseModel, Field
-
-class User(BaseModel):
-    age: Annotated[int, Field(gt=0, lt=120)]  # age must be >0 and <120
-
-user = User(age=25)  # ✅ OK
-# user = User(age=-5)  # ❌ Validation error
-```
-
 ## Routes
 In FastAPI, **routes** are the core mechanism that connects HTTP requests to the code that should handle them. Each route corresponds to a specific path (URL) and an HTTP method (GET, POST, etc.).
 

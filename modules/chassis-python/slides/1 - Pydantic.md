@@ -4,21 +4,9 @@ https://docs.pydantic.dev/latest/
 
 ## What is Pydantic?
 
-Pydantic is a Python library that helps you define **data models** with automatic validation and parsing.  
-It uses **Python type hints** to check that the data you receive matches the expected format, and it can convert types when possible.
+**Pydantic is a Python library that helps you define data models with automatic validation and parsing.**  
 
-In short:
-
-1. You define a class with attributes and their types.
-2. Pydantic validates and parses incoming data.
-3. You get clean, safe, and predictable Python objects.
-
-> [!TIP]
-> If you are a Java developer, Pydantic is similar to *Lombok* library.
-
-## Why use Pydantic?
-
-In real-world applications, especially when dealing with **APIs**, **databases**, or **user input**, the data you receive may not always be:
+In real-world applications, especially when dealing with **databases**, or **user input**, the data you receive may not always be:
 
 - Complete
 - Correctly typed
@@ -45,6 +33,51 @@ class User(BaseModel):
 
 User("mail@mail.com", "secret") # OK
 User(42, 3.14)  # raise ValidationError
+```
+
+## Annotations
+In Python, **`Annotated`** is a special type hint from the `typing` module (or `typing_extensions` in older versions) that lets you **attach metadata to a type**. This metadata can be used by tools, frameworks, or libraries, without affecting the runtime type itself. Essentially, it’s a way to **add extra information to a type hint**.
+
+### Basic Syntax
+
+```python
+from typing import Annotated
+
+# Annotated[type, metadata1, metadata2, ...]
+x: Annotated[int, "This is a positive integer"] = 42
+```
+
+* `int` → the actual type of `x`.
+* `"This is a positive integer"` → metadata (a description, constraint, or anything a tool might use).
+
+---
+
+### With Multiple Metadata
+
+```python
+from typing import Annotated
+
+x: Annotated[int, "positive", "less than 100"] = 10
+```
+
+* Here, both `"positive"` and `"less than 100"` are attached as metadata.
+* Python itself **ignores these at runtime**, but tools can use them.
+
+---
+
+### Practical Example with `pydantic` or `FastAPI`
+
+`Annotated` is especially useful in frameworks that perform **runtime validation**:
+
+```python
+from typing import Annotated
+from pydantic import BaseModel, Field
+
+class User(BaseModel):
+    age: Annotated[int, Field(gt=0, lt=120)]  # age must be >0 and <120
+
+user = User(age=25)  # ✅ OK
+# user = User(age=-5)  # ❌ Validation error
 ```
 
 ## Configuration
@@ -93,6 +126,5 @@ def load_settings(path="settings.yaml") -> Settings:
 
 settings = load_settings()
 ```
-
 
 
