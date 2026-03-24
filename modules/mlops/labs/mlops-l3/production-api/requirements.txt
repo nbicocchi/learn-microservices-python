@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+pandas
+numpy
+bentoml
+minio
+pydantic
+requests
+python-multipart
+s3fs
+gcsfs
+evidently~=0.7
+sniffio
+sqlalchemy-utils
+psycopg2-binary
+feast[postgres, redis]==0.59.0
+boto3

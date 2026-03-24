@@ -1,0 +1,187 @@
+services:
+  mlflow:
+    build: mlflow
+    ports:
+      - "5000:5000"
+    command:
+      - --host=0.0.0.0
+    volumes:
+      - ./mlflow/data/mlruns:/mlruns
+      - ./mlflow/data/mlartifacts:/mlartifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  inference:
+    image: spaceflight_service:bjgk46rfcget6aaj # <- your generated image name:tag here
+    pull_policy: never
+    environment:
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - AWS_DEFAULT_REGION=eu-central-1
+      - FEAST_S3_ENDPOINT_URL=${MINIO_URL}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_URL=${MINIO_URL}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - TZ=UTC
+    depends_on:
+      - mlflow
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/healthz" ]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+
+
+  training-pipeline:
+    build: training-pipeline
+    depends_on:
+      - mlflow
+      - postgres
+    ports:
+      - "8005:8005"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - AWS_DEFAULT_REGION=eu-central-1
+      - FEAST_S3_ENDPOINT_URL=http://minio:9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_URL=${MINIO_URL}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - TZ=UTC
+
+  minio:
+    image: minio/minio:latest
+    command: minio server /data --console-address=0.0.0.0:9001
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./minio/data/buckets:/data:consistent
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5;
+        /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+        mc mb --ignore-existing myminio/evidently-ai;
+        mc mb --ignore-existing myminio/datasets;
+        mc mb --ignore-existing myminio/features;
+        exit 0;
+      "
+
+  evidently-ai:
+    build: evidently-ai
+    healthcheck:
+      # Usiamo python -c perché curl potrebbe non essere installato nell'immagine
+      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/version')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s # Dà tempo al processo di avviarsi prima di iniziare i test
+    depends_on:
+      - createbuckets
+    ports:
+      - "8000:8000"
+    environment:
+      - FSSPEC_S3_KEY=${MINIO_ROOT_USER}
+      - FSSPEC_S3_SECRET=${MINIO_ROOT_PASSWORD}
+      - FSSPEC_S3_ENDPOINT_URL=${MINIO_URL}
+    command: [ "--workspace", "s3://evidently-ai/workspace" ]
+
+  production-api:
+      build: production-api
+      depends_on:
+        evidently-ai:
+          condition: service_healthy
+        inference:
+          condition: service_started
+        minio:
+          condition: service_started
+
+      environment:
+        - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+        - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+        - MINIO_URL=${MINIO_URL}
+        - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+        - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+        - AWS_DEFAULT_REGION=eu-central-1
+        - BENTO_URL=${BENTO_URL}
+        - KEDRO_API_URL=${KEDRO_API_URL}
+        - TZ=UTC
+      volumes:
+        - ./production-api/data:/app/data
+      ports:
+        - "8100:8100"
+
+  feature-service:
+    build: feature-service
+    volumes:
+      - ./feature-service/feature_repo:/app/feature_repo
+    ports:
+      - "8501:8501"
+    depends_on:
+      - postgres
+      - minio
+    environment:
+      - FEATURE_STORE_YAML=/app/feature_repo/feature_store.yaml
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWROD=minioadmin
+      - MINIO_ENDPOINT=minio:9000
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - AWS_ENDPOINT_URL=${MINIO_URL}
+      - AWS_DEFAULT_REGION=eu-central-1
+      - FEAST_S3_ENDPOINT_URL=${MINIO_URL}
+      - TZ=UTC
+
+  feast-ui:
+    build: feast-ui
+    volumes:
+      - ./feast-ui/feature_repo:/app/feature_repo
+    ports:
+      - "8888:8888"
+    depends_on:
+      - feature-service
+    environment:
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - AWS_ENDPOINT_URL=${MINIO_URL}
+      - AWS_DEFAULT_REGION=eu-central-1
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=spaceflight_db
+
+  redis:
+    image: redis:7.4.5
+    ports:
+      - "6379:6379"

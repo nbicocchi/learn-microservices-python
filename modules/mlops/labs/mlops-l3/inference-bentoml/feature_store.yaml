@@ -1,0 +1,24 @@
+project: spaceflight_project
+registry:
+    registry_type: sql
+    path: postgresql://user:password@postgres:5432/spaceflight_db
+    cache_ttl_seconds: 60
+provider: local
+
+
+offline_store:
+  type: postgres
+  host: postgres
+  port: 5432
+  database: spaceflight_db
+  db_schema: public
+  user: user
+  password: password
+
+online_store:
+  type: redis
+  connection_string: "localhost:6379"
+
+entity_key_serialization_version: 3
+auth:
+   type: no_auth
