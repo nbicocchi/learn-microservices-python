@@ -3,7 +3,6 @@ import time
 import random
 
 RABBIT_URL = "amqp://guest:guest@localhost/"
-
 exchange_name = "app.events"
 routing_key = "event.#"
 
