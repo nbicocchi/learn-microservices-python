@@ -4,8 +4,8 @@ import uuid
 import json
 
 RABBIT_URL = "amqp://guest:guest@localhost/"
-EXCHANGE = "rpc.topic"
-REQUEST_KEY = "rpc.request"
+exchange_name = "rpc.topic"
+routing_key = "rpc.request"
 
 class RpcClientTopic:
     def __init__(self):
@@ -13,7 +13,7 @@ class RpcClientTopic:
         self.conn = pika.BlockingConnection(params)
         self.ch = self.conn.channel()
 
-        self.ch.exchange_declare(EXCHANGE, "topic", durable=True)
+        self.ch.exchange_declare(exchange_name, "topic", durable=True)
 
         self.response = None
 
@@ -29,7 +29,7 @@ class RpcClientTopic:
         # create a reply queue for this request
         result = self.ch.queue_declare("", exclusive=True)
         reply_queue = result.method.queue
-        self.ch.queue_bind(reply_queue, EXCHANGE, reply_routing_key)
+        self.ch.queue_bind(reply_queue, exchange_name, reply_routing_key)
 
         # subscribe to reply queue
         self.ch.basic_consume(
@@ -42,8 +42,8 @@ class RpcClientTopic:
         request = {"value": value}
 
         self.ch.basic_publish(
-            exchange=EXCHANGE,
-            routing_key=REQUEST_KEY,
+            exchange=exchange_name,
+            routing_key=routing_key,
             body=json.dumps(request).encode(),
             properties=pika.BasicProperties(
                 correlation_id=self.correlation_id
