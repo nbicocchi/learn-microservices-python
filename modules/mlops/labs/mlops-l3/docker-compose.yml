@@ -8,9 +8,14 @@ services:
     volumes:
       - ./mlflow/data/mlruns:/mlruns
       - ./mlflow/data/mlartifacts:/mlartifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   inference:
-    image: spaceflight_service:gokkgarioku6higt # <- your generated image name:tag here
+    image: spaceflight_service:5d4jgfj7w6tbuaaj # <- your generated image name:tag here
     pull_policy: never
     environment:
       - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
@@ -30,6 +35,12 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/healthz" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
 
   training-pipeline:
     build: training-pipeline
@@ -50,6 +61,7 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_URL=${MINIO_URL}
       - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - TRAINING_FEATURE_SERVICE=${TRAINING_FEATURE_SERVICE}
       - TZ=UTC
 
   minio:

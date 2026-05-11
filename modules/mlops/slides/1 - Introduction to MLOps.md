@@ -2,7 +2,7 @@
 
 ## Issues of Production Models
 
-* Machine learning models are **not "set it and forget it"**.
+* ML models are **not set and forget machines**.
 * Models are trained on **specific historical datasets**.
 * Real-world data is **dynamic** — new products, customer behavior, and market conditions evolve.
 * **Data drift** and **concept drift** are natural over time.
@@ -17,35 +17,18 @@
 
 ### Data Drift
 
-**Definition:** Data drift refers to a change in the statistical properties and characteristics of the input data over time.
-
-**Cause:** It occurs when a machine learning model in production encounters data that deviates from the data it was trained on or earlier production data.
-
-**Impact:**
-
-* The model may struggle to make accurate predictions when the data distribution changes.
-* Models are designed to perform well on data similar to what they were trained on but fail when exposed to new, unseen data.
-
-**Why it matters:** Detecting and addressing data drift is vital to maintaining model reliability in dynamic environments.
-
-### Example of Data Drift
+**Definition:** Data drift refers to a change in the statistical properties and characteristics of the input data over time. It occurs when a **ML model in production encounters data that deviates from the data it was trained on**.
 
 **Scenario:** Imagine a retail chain that uses machine learning to predict how many products to stock in each of their stores. The model was trained using historical sales data, mostly from physical store sales.
 
-**Problem:**
-
-* The retailer ran a marketing campaign that shifted a significant portion of sales to their new mobile app, increasing online sales.
-* The model, trained on in-store data, didn’t perform well for online sales because the training data lacked sufficient online sales information.
-
-**Impact:**
-
-* The model’s performance dropped, especially in forecasting demand for online sales.
-* With the surge in online shopping, inventory management became more challenging.
-
 ![Data drift example](https://cdn.prod.website-files.com/660ef16a9e0687d9cc27474a/662c3c83dc614ac9ad2502f6_653fd39e0ee7f43f1055acc9_model_monitoring4.png)
 
+**Problem:** The model, trained on in-store data, didn’t perform well for online sales because the training data lacked sufficient online sales information.
 
-### Data Drift vs. Concept Drift
+**Why it matters:** Detecting and addressing data drift is vital to maintaining model reliability in dynamic environments.
+
+
+### Concept Drift
 
 **Concept Drift**
 
@@ -64,19 +47,12 @@ Both can cause model quality degradation and often occur together. Monitoring da
 ![Data drift vs. Concept drift](https://cdn.prod.website-files.com/660ef16a9e0687d9cc27474a/662c3c83dc614ac9ad2502fc_65405113503f607b598f0306_data_drift4.png)
 
 
-### Data Drift vs. Prediction Drift
+### Prediction Drift
 
 **Prediction Drift**
 
 * Refers to changes in the **model outputs** (predictions).
 * Example: A fraud detection model starts predicting fraud more frequently, or a pricing model outputs significantly lower prices.
-
-**Difference:**
-
-* **Data drift**: Shifts in input data distributions.
-* **Prediction drift**: Shifts in the model's predictions or outputs.
-
-**Similarity:**
 
 Both **data drift** and **prediction drift** are important techniques for monitoring models in production. They can signal a change in the model’s environment or data, and both can help track model performance in the absence of ground truth.
 
