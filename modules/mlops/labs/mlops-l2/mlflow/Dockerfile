@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Esponi la porta predefinita di MLflow
 EXPOSE 5000
 
-ENTRYPOINT ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--allowed-hosts", "mlflow:5000,localhost:5000,host.docker.internal:5000"]
+ENTRYPOINT ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--allowed-hosts", "mlflow:5000,localhost:5000,127.0.0.1:5000,host.docker.internal:5000"]

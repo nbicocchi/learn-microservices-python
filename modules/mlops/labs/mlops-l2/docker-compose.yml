@@ -3,8 +3,6 @@ services:
     build: mlflow
     ports:
       - "5000:5000"
-    command:
-      - --host=0.0.0.0
     volumes:
       - ./mlflow/data/mlruns:/mlruns
       - ./mlflow/data/mlartifacts:/mlartifacts
@@ -15,7 +13,7 @@ services:
       retries: 12
 
   inference:
-    image: spaceflight_service:ovy7iiw3ewqxhigt   # <- your generated image name:tag here
+    image: spaceflight_service:anf5chsnzs2z7igt    # <- your generated image name:tag here
     pull_policy: never
     environment:
       - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}

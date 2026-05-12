@@ -5,11 +5,8 @@
 Create and activate a dedicated Python environment using **pyenv**:
 
 ```bash
-pyenv install 3.13.3
-pyenv local 3.13.3
-pyenv virtualenv mlops
-pyenv activate mlops
-
+# create venv with pycharm settings
+source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
