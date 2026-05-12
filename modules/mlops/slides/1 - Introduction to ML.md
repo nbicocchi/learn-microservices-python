@@ -208,14 +208,7 @@ To build a **machine learning model that generalizes well**, we must carefully m
 - The model learns patterns and relationships in the data.
 - Usually the **largest portion** of the dataset (e.g., **60-80%**).
 
-**2. Test Set**
-
-- Used for **final evaluation** after training and validation.
-- Provides an **unbiased assessment** of the model’s real-world performance.
-- Should **never** be used during training or validation.
-- Typically **10-20%** of the dataset.
-
-**3. Validation Set**
+**2. Validation Set**
 
 - Used to **tune hyperparameters** and prevent overfitting.
 - Helps in **model selection** (e.g., choosing learning rate, number of layers).
@@ -223,14 +216,12 @@ To build a **machine learning model that generalizes well**, we must carefully m
 - Typically **10-20%** of the dataset.
 - Prevents the risk of overfitting to the test set.
 
-**Overfitting**
+**3. Test Set**
 
-- Machine learning systems are **trained** to minimize a specific cost (or loss) function, which measures how well the model predicts the target values.
-- The goal is to **reduce error** on the training examples, which sounds intuitive: *Lower error on the training set means the model is performing well during training.*
-- **Overfitting occurs when the model perfectly learns the training data but fails to generalize to new, unseen examples.**
-- The model becomes **too complex** and “memorizes” the training set, capturing even the **noise** or irrelevant patterns in the data.
-
-![](images/overfitting.webp)
+- Used for **final evaluation** after training and validation.
+- Provides an **unbiased assessment** of the model’s real-world performance.
+- Should **never** be used during training or validation.
+- Typically **10-20%** of the dataset.
 
 ### Model Validation
 
@@ -242,6 +233,15 @@ To build a **machine learning model that generalizes well**, we must carefully m
   - **Reliable Performance Estimate**: By averaging over multiple folds, we get a more stable estimate of model performance.
 
 ![](images/cross-validation.webp)
+
+**Overfitting**
+
+- Machine learning systems are **trained** to minimize a specific cost (or loss) function, which measures how well the model predicts the target values.
+- The goal is to **reduce error** on the training examples, which sounds intuitive: *Lower error on the training set means the model is performing well during training.*
+- **Overfitting occurs when the model perfectly learns the training data but fails to generalize to new, unseen examples.**
+- The model becomes **too complex** and “memorizes” the training set, capturing even the **noise** or irrelevant patterns in the data.
+
+![](images/overfitting.webp)
 
 ## The Complete Workflow
 ![](images/ml-pipeline.webp)
