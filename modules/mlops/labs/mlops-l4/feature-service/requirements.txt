@@ -1,0 +1,11 @@
+streamlit
+streamlit-option-menu
+requests
+feast[postgres, redis]==0.62.0
+pandas
+boto3
+psycopg2-binary
+sqlalchemy-utils
+s3fs
+evidently~=0.7
+#time

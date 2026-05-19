@@ -1,0 +1,27 @@
+service: "service:SpaceflightService"
+
+include:
+  - "service.py"
+  - "feature_store.yaml"
+
+python:
+  packages:
+    - setuptools
+    - bentoml
+    - uvicorn
+    - mlflow
+    - pandas
+    - pydantic
+    - numpy
+    - scikit-learn
+    - scipy
+    - sqlalchemy-utils
+    - psycopg2-binary
+    - "feast[postgres, redis]==0.62.0"
+
+docker:
+  system_packages:
+    - "build-essential"
+    - "python3-dev"
+    - "gcc"
+    - "libpq-dev"
